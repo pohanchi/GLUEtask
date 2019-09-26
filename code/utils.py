@@ -71,7 +71,7 @@ def pre_process_datasets(datasets,input_len,a_length,seq_token,ans_token,end_tok
                 if only_need_length > 800:
                     continue 
                 answer_span[i,:len(ans)] = ans
-                answer_span[i:,len(ans):] = pad_token
+                answer_span[i,len(ans):] = pad_token
                 only_need_length = len(text)
                 input_ids[i,:only_need_length] = text
                 lm_labels[i,:only_need_length] = text

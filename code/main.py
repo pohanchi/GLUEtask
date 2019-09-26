@@ -170,7 +170,7 @@ if __name__ == "__main__":
             raise ImportError(
                 "Please install apex from https://www.github.com/nvidia/apex to use fp16 training.")
         model, optimizer = amp.initialize(
-            model, optimizer, opt_level=args.fp16_opt_level)
+            model, optimizer, opt_level=args.fp16_opt_level,loss_scale=128)
 
     if args.do_train:
         writer = SummaryWriter(args.output_dir+"/tensorboard/")

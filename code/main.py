@@ -9,6 +9,10 @@ import json
 import os
 import pandas as pd
 import logging
+import tqdm 
+from tqdm import tqdm, trange
+
+from tensorboardX import SummaryWriter
 
 from torch.utils.data import (
     DataLoader, RandomSampler, SequentialSampler, TensorDataset)
@@ -93,7 +97,7 @@ if __name__ == "__main__":
     # data format
     data = prep(head, args, "train")
     dev_data = prep(head, args, "dev")
-    test_data = prep(head, args,"test")
+    # test_data = prep(head, args,"test")
     
     # load model and tokenizer
     tokenizer, special_tokens_ids, special_tokens = process_special_tokens()
@@ -104,7 +108,7 @@ if __name__ == "__main__":
     # decide the prefer length
     max_length,a_length = longest_length(model)
 
-
+    print(data[:5])
     if isinstance(data[0][2], int):
         for i in range(len(data)):
             if data[i][2] == 0:
@@ -112,38 +116,36 @@ if __name__ == "__main__":
             else:
                 data[i][2] = "unrelated"
 
-    dataset = (data, dev_data, test_data)
+    datasets = (data, dev_data)
 
     def tokenize_and_encode(obj):
         """ Tokenize and encode a nested object """
         if isinstance(obj, str):
+
             return tokenizer.convert_tokens_to_ids(tokenizer.tokenize(obj))
         elif isinstance(obj, set):
             return obj
         return list(tokenize_and_encode(o) for o in obj)
-
+    
     # encode to index
-    encoded_datasets = tokenize_and_encode(dataset)
-    input_length = max(len(seq1[:max_length]) + len(seq2[:max_length]) + len(ans[:a_length]) + 3
-                       for dataset in encoded_datasets for seq1, seq2, ans in dataset)
-    print(input_length)
+    encoded_datasets = tokenize_and_encode(datasets)
     # Max size of input for the pre-trained model
-    input_length = min(input_length, model.config.n_positions-100)
+    input_length = 1024
     tensor_datasets = pre_process_datasets(
-        encoded_datasets, input_length,ans_length, *special_tokens_ids)
+        encoded_datasets, input_length,a_length, *special_tokens_ids)
 
-    train_dataset = TensorDataset(*tensor_datasets[0])
-    dev_dataset = TensorDataset(*tensor_datasets[1])
-    test_dataset = TensorDataset(*tensor_datasets[2])
+    train_dataset = TensorDataset(*(tensor_datasets[0]))
+    dev_dataset = TensorDataset(*(tensor_datasets[1]))
+    # test_dataset = TensorDataset(*tensor_datasets[2])
 
     train_sampler = RandomSampler(train_dataset)
     dev_sampler = RandomSampler(dev_dataset)
-    test_sampler = RandomSampler(test_dataset)
+    # test_sampler = RandomSampler(test_dataset)
 
-    train_dataloader(train_dataset, sampler=train_sampler,
-                     batch_size=args.train_batch_size)
-    dev_dataloader(dev_dataset, sampler=dev_sampler, batch_size=1)
-    test_dataloader(test_dataset, sampler=dev_sampler, batch_size=1)
+    train_dataloader=  DataLoader(train_dataset, sampler=train_sampler,
+                     batch_size=2)
+    dev_dataloader= DataLoader(dev_dataset, sampler=dev_sampler, batch_size=1)
+    # test_dataloader(test_dataset, sampler=dev_sampler, batch_size=1)
 
     if args.do_train:
         param_optimizer = list(model.named_parameters())
@@ -185,7 +187,7 @@ if __name__ == "__main__":
             tqdm_bar = tqdm(train_dataloader, desc="Training")
             for i, batch in enumerate(tqdm_bar):
                 batch = tuple(t.to(device) for t in batch)
-                input_ids, lm_labels,_,_,_ = batch
+                input_ids, lm_labels,_ = batch
                 losses = model(input_ids, labels=lm_labels)
                 if args.do_LLL != "":
                     loss = losses[0] + importance * Reg.penalty(model)
@@ -210,7 +212,7 @@ if __name__ == "__main__":
                 if step_step % args.eval_step == 0:
                     if args.do_eval:
                         evaluate_and_summary(
-                            args,special_tokens_ids,model, dev_dataloader, test_dataloader, writer, loss,step_step)
+                            args,special_tokens_ids,model, dev_dataloader, writer, loss,step_step)
 
                 optimizer.zero_grad()
                 tr_loss += loss.item()
@@ -237,4 +239,4 @@ if __name__ == "__main__":
         model = OpenAIGPTLMHeadModel.from_pretrained(args.output_dir)
         tokenizer = OpenAIGPTTokenizer.from_pretrained(args.output_dir)
         model.to(device)
-        Dump_json(args,special_tokens_ids,model, test_dataloader, writer, step_step)
+        # Dump_json(args,special_tokens_ids,model, test_dataloader, writer, step_step)

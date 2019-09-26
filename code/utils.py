@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 def longest_length(model):
-    max_length = model.config.n_positions//4 -3
+    max_length = model.config.n_positions//2 -3 -20
     ans_length = 20
     return max_length, ans_length  
 
@@ -50,22 +50,27 @@ def pre_process_datasets(datasets,input_len,a_length,seq_token,ans_token,end_tok
     count = 1
     for dataset in datasets:
         n_batch = len(dataset)
-        input_ids = np.zeros((n_batch,input_len),dtype=np.int64)
+        input_ids = np.zeros((n_batch,1024),dtype=np.int64)
         answer_span = np.zeros((n_batch,a_length))
 
-        lm_labels = np.full((n_batch,input_len),fill_value=-1,dtype=np.int64)
+        lm_labels = np.full((n_batch,1024),fill_value=-1,dtype=np.int64)
         for i , (sent1,sent2,ans) in enumerate(dataset):
             if count == 1:
                 cannot_calculate_loss = len(sent1 + [seq_token] + sent2)
                 text= sent1 + [seq_token] + sent2 + [ans_token] + ans + [end_token]
                 only_need_length = len(text)
+                if only_need_length > 1024:
+                    continue
                 input_ids[i,:only_need_length] = text
                 lm_labels[i,:only_need_length] = text
                 input_ids[i,only_need_length:] = pad_token
                 lm_labels[i,:cannot_calculate_loss] = -1
             else:
                 cannot_calculate_loss = len(sent1 + [seq_token] + sent2)
-                text = sent1 + [seq_token] + sent2 + [ans_token] 
+                text = sent1 + [seq_token] + sent2 + [ans_token]
+                only_need_length = len(text)
+                if only_need_length > 1024:
+                    continue 
                 answer_span[i,:len(ans)] = ans
                 answer_span[i:,len(ans):] = pad_token
                 only_need_length = len(text)
@@ -74,7 +79,7 @@ def pre_process_datasets(datasets,input_len,a_length,seq_token,ans_token,end_tok
                 input_ids[i,only_need_length:] = pad_token
                 lm_labels[i,:cannot_calculate_loss] = -1
         count += 1    
-        all_inputs = (input_ids, lm_labels,ans)
+        all_inputs = (input_ids, lm_labels,answer_span)
         tensor_datasets+= [tuple(torch.tensor(t) for t in all_inputs)]
     return tensor_datasets
 

@@ -12,6 +12,8 @@ from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler, Tens
 from pytorch_transformers import (GPT2LMHeadModel, GPT2Tokenizer,GPT2Config,AdamW, cached_path, WEIGHTS_NAME, CONFIG_NAME, WarmupLinearSchedule)
 import pickle 
 from preprocess import prep
+from tqdm import tqdm, trange
+
 
 from utils import process_special_tokens, random_seed_setup
 
@@ -120,7 +122,7 @@ def evaluate_and_summary(args,special_tokens_ids,model,dev_dataloader,test_datal
     unknown = 0
     unmatch = 0
     for step, data in enumerate(tqdm_bar_2):
-        sentence, _,seq1,seq2,answer = tuple(t.to(device) for t in data)
+        sentence, _,answer = tuple(t.to(device) for t in data)
         sentence = sentence[sentence != special_tokens_ids[3]].long()
         answer = answer[answer != special_tokens_ids[3]].long()
         out = sample_sequence(
@@ -164,54 +166,6 @@ def evaluate_and_summary(args,special_tokens_ids,model,dev_dataloader,test_datal
     writer.add_scalar("Dev_Unknown_Acc",unknown_acc,step_step)
     writer.add_scalar("Dev_Unmatch_Acc",mismatch_acc,step_step)
 
-    tqdm_bar_3 = tqdm(dev_dataloader, desc="Test")
-    match = 0
-    unknown = 0
-    unmatch = 0
-    for step, data in enumerate(tqdm_bar_3):
-        sentence, _,_,_,answer = tuple(t.to(device) for t in data)
-        sentence = sentence[sentence != special_tokens_ids[3]].long()
-        answer = answer[answer != special_tokens_ids[3]].long()
-        out = sample_sequence(
-            model=model,
-            context=sentence,
-            temperature=args.temperature,
-            top_k=args.top_k,
-            top_p=args.top_p,
-            device=args.device,
-            is_xlnet=False,
-            tokenizer=tokenizer,
-            argmax=args.argmax,num_samples=args.sample)
-        
-        
-        # print("It costs {} seconds for generate data!!".format(end_time-start_time))
-        out_ = tokenizer.decode(out[:, :].tolist(),clean_up_tokenization_spaces=True,skip_special_tokens=True)
-        answer_ = tokenizer.decode(answer.tolist(),clean_up_tokenization_spaces=True,skip_special_tokens=True)
-
-        if args.path == "QNLI" or args.path == "RTE":
-            if answer_[0].strip() == "entailment":
-                label = 1
-            if answer_[0].strip() == "not_entailment":
-                label = 0
-            if out_[0].strip() == "entailment":
-                pred = 1
-            elif out_[0].strip() == "not_entailment":
-                pred = 0
-            else:
-                pred = 2
-                unknown += 1
-            if label == pred:
-                match +=1
-            if label != pred:
-                if pred !=2:
-                    unmatch +=1
-    
-    accuracy = match / (match+unmatch+unknown)
-    unknown_acc = unknown / (match+unmatch+unknown)
-    mismatch_acc = unmatch / (match+unmatch+unknown)
-    writer.add_scalar("Test_Acc",accuracy,step_step)
-    writer.add_scalar("Test_unknown_Acc",unknown_acc,step_step)
-    writer.add_scalar("Test_mismatch_Acc",mismatch_acc,step_step)
     return
 def Dump_json(args,special_tokens_ids,model, test_dataloader, writer, step_step):
     model = model.eval()
@@ -226,7 +180,7 @@ def Dump_json(args,special_tokens_ids,model, test_dataloader, writer, step_step)
     unknown = 0
     unmatch = 0
     for step, data in enumerate(tqdm_bar_3):
-        sentence, _,seq1,seq2,answer = tuple(t.to(device) for t in data)
+        sentence, _,answer = tuple(t.to(device) for t in data)
         sentence = sentence[sentence != special_tokens_ids[3]].long()
         answer = answer[answer != special_tokens_ids[3]].long()
         out = sample_sequence(

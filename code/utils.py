@@ -11,9 +11,19 @@ import pandas as pd
 from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler, TensorDataset)
 from pytorch_transformers import (GPT2LMHeadModel, GPT2Tokenizer,GPT2Config,AdamW, cached_path, WEIGHTS_NAME, CONFIG_NAME, WarmupLinearSchedule)
 import pickle 
+import logging
+import random
+import logging
+
+logging.basicConfig(
+    format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
+    datefmt='%m/%d/%Y %H:%M:%S',
+    level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 def longest_length(model):
-    max_length = model.config.n_positions//2 -3
+    max_length = model.config.n_positions//4 -3
     ans_length = 20
     return max_length, ans_length  
 
@@ -31,7 +41,7 @@ def process_special_tokens():
     special_tokens_ids = list(tokenizer.convert_tokens_to_ids(token) for token in special_tokens)
     return  tokenizer,special_tokens_ids,special_tokens
 
-def pre_process_datasets(datasets,input_len,seq_token,ans_token,end_token,pad_token):
+def pre_process_datasets(datasets,input_len,a_length,seq_token,ans_token,end_token,pad_token):
     """ Pre-process datasets containing lists of tuples(story, 1st continuation, 2nd continuation, label)
 
         To Transformer inputs of shape (n_batch, n_alternative, length) comprising for each batch, continuation:

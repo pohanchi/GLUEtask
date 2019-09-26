@@ -8,6 +8,8 @@ import pdb
 import json
 import os
 import pandas as pd
+import logging
+
 from torch.utils.data import (
     DataLoader, RandomSampler, SequentialSampler, TensorDataset)
 from pytorch_transformers import (GPT2LMHeadModel, GPT2Tokenizer, GPT2Config,
@@ -37,6 +39,7 @@ if __name__ == "__main__":
                         help="which one ewc you want to run ? there have three method: EWC, SI, MAS, IMM")
     parser.add_argument("--output_dir", default=None, type=str, required=True,
                         help="The output directory where the model predictions and checkpoints will be written.")
+    parser.add_argument('--seed', type=int, default=42)
 
     # train
     parser.add_argument('--num_train_epochs', type=int, default=3)
@@ -44,12 +47,6 @@ if __name__ == "__main__":
     parser.add_argument("--adam_epsilon", default=1e-8,
                         type=float, help="Epsilon for Adam optimizer.")
     parser.add_argument('--max_grad_norm', type=int, default=1)
-    parser.add_argument("--max_steps", default=-1, type=int,
-                        help="If > 0: set total number of training \
-                        steps to perform. Override num_train_epochs.")
-    parser.add_argument('--gradient_accumulation_steps', type=int, default=1,
-                        help="Number of updates steps to accumulate before\
-                        performing a backward/update pass.")
     parser.add_argument('--learning_rate', type=float, default=6.25e-5)
     parser.add_argument("--warmup_steps", default=0, type=int,
                         help="Linear warmup over warmup_steps.")
@@ -96,8 +93,8 @@ if __name__ == "__main__":
     # data format
     data = prep(head, args, "train")
     dev_data = prep(head, args, "dev")
-    test_data = prep(head, args."test")
-
+    test_data = prep(head, args,"test")
+    
     # load model and tokenizer
     tokenizer, special_tokens_ids, special_tokens = process_special_tokens()
     model = GPT2LMHeadModel.from_pretrained(args.model_name)
@@ -105,9 +102,10 @@ if __name__ == "__main__":
     model.to(device)
 
     # decide the prefer length
-    max_length = longest_length(model)
+    max_length,a_length = longest_length(model)
 
-    if isinstance(data[0][2]) == int:
+
+    if isinstance(data[0][2], int):
         for i in range(len(data)):
             if data[i][2] == 0:
                 data[i][2] = "related"
@@ -126,14 +124,13 @@ if __name__ == "__main__":
 
     # encode to index
     encoded_datasets = tokenize_and_encode(dataset)
-
     input_length = max(len(seq1[:max_length]) + len(seq2[:max_length]) + len(ans[:a_length]) + 3
                        for dataset in encoded_datasets for seq1, seq2, ans in dataset)
-    
+    print(input_length)
     # Max size of input for the pre-trained model
-    input_length = min(input_length, model.config.n_positions)
+    input_length = min(input_length, model.config.n_positions-100)
     tensor_datasets = pre_process_datasets(
-        encoded_datasets, input_length, *special_tokens_ids)
+        encoded_datasets, input_length,ans_length, *special_tokens_ids)
 
     train_dataset = TensorDataset(*tensor_datasets[0])
     dev_dataset = TensorDataset(*tensor_datasets[1])

@@ -37,20 +37,34 @@ def pre_process_datasets(datasets,input_len,seq_token,ans_token,end_token,pad_to
         To Transformer inputs of shape (n_batch, n_alternative, length) comprising for each batch, continuation:
         input_ids[batch, :] = [story_token] + story[:story_length] + [question_token] + question[:que_length] +[end_token]"""
     tensor_datasets = []
+    count = 1
     for dataset in datasets:
         n_batch = len(dataset)
         input_ids = np.zeros((n_batch,input_len),dtype=np.int64)
+        answer_span = np.zeros((n_batch,a_length))
+
         lm_labels = np.full((n_batch,input_len),fill_value=-1,dtype=np.int64)
         for i , (sent1,sent2,ans) in enumerate(dataset):
-            cannot_calculate_loss = len(sent1 + [seq_token] + sent2)
-            text= sent1 + [seq_token] + sent2 + [ans_token] + ans + [end_token]
-            only_need_length = len(text)
-            input_ids[i,:only_need_length] = text
-            lm_labels[i,:only_need_length] = text
-            input_ids[i,only_need_length:] = pad_token
-            lm_labels[i,:cannot_calculate_loss] = -1
-            
-        all_inputs = (input_ids, lm_labels)
+            if count == 1:
+                cannot_calculate_loss = len(sent1 + [seq_token] + sent2)
+                text= sent1 + [seq_token] + sent2 + [ans_token] + ans + [end_token]
+                only_need_length = len(text)
+                input_ids[i,:only_need_length] = text
+                lm_labels[i,:only_need_length] = text
+                input_ids[i,only_need_length:] = pad_token
+                lm_labels[i,:cannot_calculate_loss] = -1
+            else:
+                cannot_calculate_loss = len(sent1 + [seq_token] + sent2)
+                text = sent1 + [seq_token] + sent2 + [ans_token] 
+                answer_span[i,:len(ans)] = ans
+                answer_span[i:,len(ans):] = pad_token
+                only_need_length = len(text)
+                input_ids[i,:only_need_length] = text
+                lm_labels[i,:only_need_length] = text
+                input_ids[i,only_need_length:] = pad_token
+                lm_labels[i,:cannot_calculate_loss] = -1
+        count += 1    
+        all_inputs = (input_ids, lm_labels,ans)
         tensor_datasets+= [tuple(torch.tensor(t) for t in all_inputs)]
     return tensor_datasets
 

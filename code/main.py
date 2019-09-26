@@ -14,7 +14,7 @@ from pytorch_transformers import (GPT2LMHeadModel, GPT2Tokenizer, GPT2Config,
                                   AdamW, cached_path, WEIGHTS_NAME, CONFIG_NAME, WarmupLinearSchedule)
 import pickle
 from preprocess import prep
-from evaluate import evaluate_and_summary
+from evaluate import evaluate_and_summary,Dump_json
 from utils import longest_length, setup_device, process_special_tokens, pre_process_datasets, random_seed_setup
 
 logging.basicConfig(
@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     # train
     parser.add_argument('--num_train_epochs', type=int, default=3)
-    parser.add_argument("--eval_step", default=500, type=int)
+    parser.add_argument("--eval_step", default=4000, type=int)
     parser.add_argument("--adam_epsilon", default=1e-8,
                         type=float, help="Epsilon for Adam optimizer.")
     parser.add_argument('--max_grad_norm', type=int, default=1)
@@ -188,7 +188,7 @@ if __name__ == "__main__":
             tqdm_bar = tqdm(train_dataloader, desc="Training")
             for i, batch in enumerate(tqdm_bar):
                 batch = tuple(t.to(device) for t in batch)
-                input_ids, lm_labels = batch
+                input_ids, lm_labels,_,_,_ = batch
                 losses = model(input_ids, labels=lm_labels)
                 if args.do_LLL != "":
                     loss = losses[0] + importance * Reg.penalty(model)
@@ -213,7 +213,7 @@ if __name__ == "__main__":
                 if step_step % args.eval_step == 0:
                     if args.do_eval:
                         evaluate_and_summary(
-                            args,special_tokens_ids,model, dev_dataloader, test_dataloader, writer, loss)
+                            args,special_tokens_ids,model, dev_dataloader, test_dataloader, writer, loss,step_step)
 
                 optimizer.zero_grad()
                 tr_loss += loss.item()
@@ -240,3 +240,4 @@ if __name__ == "__main__":
         model = OpenAIGPTLMHeadModel.from_pretrained(args.output_dir)
         tokenizer = OpenAIGPTTokenizer.from_pretrained(args.output_dir)
         model.to(device)
+        Dump_json(args,special_tokens_ids,model, test_dataloader, writer, step_step)

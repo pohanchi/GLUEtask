@@ -26,6 +26,7 @@ if __name__ == "__main__":
     #choose mode
     if args.mode == "train":
         data=pd.read_csv(head + args.path+"/train.tsv",sep='\t',encoding='utf-8')
+        table = pd.read_table(head + args.path+"/train.tsv",sep='\t',encoding='utf-8')
     if args.mode == "dev":
         data=pd.read_csv(head + args.path+"/dev.tsv",sep='\t',encoding='utf-8')
     if args.mode == "test":

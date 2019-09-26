@@ -199,7 +199,9 @@ if __name__ == "__main__":
                     
                 optimizer.step()
                 scheduler.step()
-                writer.add_scalar('training_loss',loss,step_step)
+                if step % 100 == 0:
+                    writer.add_scalar('training_loss',loss,step_step)
+                    writer.add_scalar('')
                 optimizer.zero_grad()
                 tr_loss += loss.item()
                 step_step += 1

@@ -19,17 +19,17 @@ import pickle
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     head = "./Dataset/"
-    parser.add_argument("--dataset_path",default="WNLI",type=str)
+    parser.add_argument("--path",default="WNLI",type=str)
     parser.add_argument("--mode",default="train",type=str,help="dev, train, test!!")
     args=parser.parse_args()
     
     #choose mode
     if args.mode == "train":
-        data=pd.read_csv(head + args.dataset_path+"/train.tsv",delimiter="\t",encoding='utf-8')
+        data=pd.read_csv(head + args.path+"/train.tsv",sep='\t',encoding='utf-8')
     if args.mode == "dev":
-        data=pd.read_csv(head + args.dataset_path+"/dev.tsv",delimiter="\t",encoding='utf-8')
+        data=pd.read_csv(head + args.path+"/dev.tsv",sep='\t',encoding='utf-8')
     if args.mode == "test":
-        data=pd.read_csv(head + args.dataset_path+"/test.tsv",delimiter="\t",encoding='utf-8')
+        data=pd.read_csv(head + args.path+"/test.tsv",sep='\t',encoding='utf-8')
     
     predata = data.values[:,1:,].tolist()
     print(len(predata))

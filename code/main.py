@@ -7,7 +7,7 @@ import IPython
 import pdb
 import json
 import os
-import pandas as pd
+# import pandas as pd
 import logging
 import tqdm 
 from tqdm import tqdm, trange
@@ -143,7 +143,7 @@ if __name__ == "__main__":
     # test_sampler = RandomSampler(test_dataset)
 
     train_dataloader=  DataLoader(train_dataset, sampler=train_sampler,
-                     batch_size=4)
+                     batch_size=2)
     dev_dataloader= DataLoader(dev_dataset, sampler=dev_sampler, batch_size=1)
     # test_dataloader(test_dataset, sampler=dev_sampler, batch_size=1)
 

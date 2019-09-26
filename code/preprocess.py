@@ -12,7 +12,7 @@ import csv
 from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler, TensorDataset)
 from pytorch_transformers import (GPT2LMHeadModel, GPT2Tokenizer,GPT2Config,AdamW, cached_path, WEIGHTS_NAME, CONFIG_NAME, WarmupLinearSchedule)
 import pickle 
-from pandas import DataFrame
+# from pandas import DataFrame
 
 def read_f(reader):
     data_list = list()

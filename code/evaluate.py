@@ -136,9 +136,10 @@ def evaluate_and_summary(args,special_tokens_ids,tokenizer,model,dev_dataloader,
         
         
         # print("It costs {} seconds for generate data!!".format(end_time-start_time))
-        out_ = tokenizer.decode(out[:, :].tolist(),clean_up_tokenization_spaces=True,skip_special_tokens=True)
+        out_ = tokenizer.decode(out[0, :].tolist(),clean_up_tokenization_spaces=True,skip_special_tokens=True)
         answer_ = tokenizer.decode(answer.tolist(),clean_up_tokenization_spaces=True,skip_special_tokens=True)
-
+        label = None
+        pred = None
         if args.path == "QNLI" or args.path == "RTE":
             if answer_[0].strip() == "entailment":
                 label = 1

@@ -374,6 +374,7 @@ if __name__ == "__main__":
                 # evalaute
                 if step_step % args.eval_step == 0:
                     if args.do_eval:
+                        # writer.add_scalar('training_loss',loss,step_step)
                         evaluate_and_summary(
                             args,special_tokens_ids,tokenizer,model, dev_dataloader, writer, loss,step_step,device)
 

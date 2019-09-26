@@ -13,6 +13,16 @@ from pytorch_transformers import (GPT2LMHeadModel, GPT2Tokenizer,GPT2Config,Adam
 import pickle 
 
 
+def prep(args):
+    #choose mode
+    if args.mode == "train":
+        data=pd.read_csv(head + args.path+"/train.tsv",sep='\t',encoding='utf-8',error_bad_lines=False)
+    if args.mode == "dev":
+        data=pd.read_csv(head + args.path+"/dev.tsv",sep='\t',encoding='utf-8',error_bad_lines=False)
+    if args.mode == "test":
+        data=pd.read_csv(head + args.path+"/test.tsv",sep='\t',encoding='utf-8',error_bad_lines=False)
+    predata = data.values[:,1:,].tolist()
+    return predata
 
 
 
@@ -23,6 +33,7 @@ if __name__ == "__main__":
     parser.add_argument("--mode",default="train",type=str,help="dev, train, test!!")
     args=parser.parse_args()
     
+    
     #choose mode
     if args.mode == "train":
         data=pd.read_csv(head + args.path+"/train.tsv",sep='\t',encoding='utf-8',error_bad_lines=False)
@@ -32,6 +43,6 @@ if __name__ == "__main__":
         data=pd.read_csv(head + args.path+"/test.tsv",sep='\t',encoding='utf-8',error_bad_lines=False)
     
     predata = data.values[:,1:,].tolist()
-    print(predata)
+    
 
     

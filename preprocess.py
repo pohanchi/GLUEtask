@@ -25,14 +25,13 @@ if __name__ == "__main__":
     
     #choose mode
     if args.mode == "train":
-        data=pd.read_csv(head + args.path+"/train.tsv",sep='\t',encoding='utf-8')
-        table = pd.read_table(head + args.path+"/train.tsv",sep='\t',encoding='utf-8')
+        data=pd.read_csv(head + args.path+"/train.tsv",sep='\t',encoding='utf-8',error_bad_lines=False)
     if args.mode == "dev":
-        data=pd.read_csv(head + args.path+"/dev.tsv",sep='\t',encoding='utf-8')
+        data=pd.read_csv(head + args.path+"/dev.tsv",sep='\t',encoding='utf-8',error_bad_lines=False)
     if args.mode == "test":
-        data=pd.read_csv(head + args.path+"/test.tsv",sep='\t',encoding='utf-8')
+        data=pd.read_csv(head + args.path+"/test.tsv",sep='\t',encoding='utf-8',error_bad_lines=False)
     
     predata = data.values[:,1:,].tolist()
-    print(len(predata))
+    print(predata)
 
     

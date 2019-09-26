@@ -49,16 +49,16 @@ def pre_process_datasets(datasets,input_len,a_length,seq_token,ans_token,end_tok
     count = 1
     for dataset in datasets:
         n_batch = len(dataset)
-        input_ids = np.zeros((n_batch,1024),dtype=np.int64)
+        input_ids = np.zeros((n_batch,800),dtype=np.int64)
         answer_span = np.zeros((n_batch,a_length))
 
-        lm_labels = np.full((n_batch,1024),fill_value=-1,dtype=np.int64)
+        lm_labels = np.full((n_batch,800),fill_value=-1,dtype=np.int64)
         for i , (sent1,sent2,ans) in enumerate(dataset):
             if count == 1:
                 cannot_calculate_loss = len(sent1 + [seq_token] + sent2)
                 text= sent1 + [seq_token] + sent2 + [ans_token] + ans + [end_token]
                 only_need_length = len(text)
-                if only_need_length > 1024:
+                if only_need_length > 800:
                     continue
                 input_ids[i,:only_need_length] = text
                 lm_labels[i,:only_need_length] = text
@@ -68,7 +68,7 @@ def pre_process_datasets(datasets,input_len,a_length,seq_token,ans_token,end_tok
                 cannot_calculate_loss = len(sent1 + [seq_token] + sent2)
                 text = sent1 + [seq_token] + sent2 + [ans_token]
                 only_need_length = len(text)
-                if only_need_length > 1024:
+                if only_need_length > 800:
                     continue 
                 answer_span[i,:len(ans)] = ans
                 answer_span[i:,len(ans):] = pad_token

@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
     # train
     parser.add_argument('--num_train_epochs', type=int, default=3)
-    parser.add_argument("--eval_step", default=4000, type=int)
+    parser.add_argument("--eval_step", default=100, type=int)
     parser.add_argument("--adam_epsilon", default=1e-8,
                         type=float, help="Epsilon for Adam optimizer.")
     parser.add_argument('--max_grad_norm', type=int, default=1)
@@ -130,7 +130,7 @@ if __name__ == "__main__":
     # encode to index
     encoded_datasets = tokenize_and_encode(datasets)
     # Max size of input for the pre-trained model
-    input_length = 1024
+    input_length = 800
     tensor_datasets = pre_process_datasets(
         encoded_datasets, input_length,a_length, *special_tokens_ids)
 
@@ -212,7 +212,7 @@ if __name__ == "__main__":
                 if step_step % args.eval_step == 0:
                     if args.do_eval:
                         evaluate_and_summary(
-                            args,special_tokens_ids,model, dev_dataloader, writer, loss,step_step)
+                            args,special_tokens_ids,tokenizer,model, dev_dataloader, writer, loss,step_step,device)
 
                 optimizer.zero_grad()
                 tr_loss += loss.item()

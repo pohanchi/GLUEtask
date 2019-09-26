@@ -7,6 +7,7 @@ import IPython
 import pdb 
 import json 
 import os 
+import time
 from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler, TensorDataset)
 from pytorch_transformers import (GPT2LMHeadModel, GPT2Tokenizer,GPT2Config,AdamW, cached_path, WEIGHTS_NAME, CONFIG_NAME, WarmupLinearSchedule)
 import pickle 
@@ -106,12 +107,10 @@ def sample_sequence(model,
 
     return next_token_matrix
 
-def evaluate_and_summary(args,special_tokens_ids,model,dev_dataloader,test_dataloader,writer,loss,step_step):
+def evaluate_and_summary(args,special_tokens_ids,tokenizer,model,dev_dataloader,writer,loss,step_step,device):
     
     model = model.eval()
-    device=args.device
     n_gpu = torch.cuda.device_count()
-    logger.info("device: {}, n_gpu {}".format(device, n_gpu))
     
     
     tqdm_bar_2 = tqdm(dev_dataloader, desc="Validate")
@@ -130,7 +129,7 @@ def evaluate_and_summary(args,special_tokens_ids,model,dev_dataloader,test_datal
             temperature=args.temperature,
             top_k=args.top_k,
             top_p=args.top_p,
-            device=args.device,
+            device=device,
             is_xlnet=False,
             tokenizer=tokenizer,
             argmax=args.argmax,num_samples=args.sample)

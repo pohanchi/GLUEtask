@@ -152,20 +152,26 @@ def evaluate_and_summary(args,special_tokens_ids,tokenizer,model,dev_dataloader,
             tokenizer=tokenizer,
             argmax=args.argmax,num_samples=args.sample)
         
-        
+        #print(out)
+        #IPython.embed()
+        out = out[:,:].tolist()
         # print("It costs {} seconds for generate data!!".format(end_time-start_time))
-        out_ = tokenizer.decode(out[0, :].tolist(),clean_up_tokenization_spaces=True,skip_special_tokens=True)
+        out_ = tokenizer.decode(out[0],clean_up_tokenization_spaces=True,skip_special_tokens=True)
         answer_ = tokenizer.decode(answer.tolist(),clean_up_tokenization_spaces=True,skip_special_tokens=True)
+        #print(out_)
+        #print(answer_)
+        #IPython.embed()
+        #pdb.set_trace()
         label = None
         pred = None
         if args.path == "QNLI" or args.path == "RTE":
-            if answer_[0].strip() == "entailment":
+            if answer_.strip() == "entailment":
                 label = 1
-            if answer_[0].strip() == "not_entailment":
+            if answer_.strip() == "not_entailment":
                 label = 0
-            if out_[0].strip() == "entailment":
+            if out_.strip() == "entailment":
                 pred = 1
-            elif out_[0].strip() == "not_entailment":
+            elif out_.strip() == "not_entailment":
                 pred = 0
             else:
                 pred = 2
@@ -176,6 +182,25 @@ def evaluate_and_summary(args,special_tokens_ids,tokenizer,model,dev_dataloader,
                 if pred !=2:
                     unmatch +=1 
 
+        elif args.path == "WNLI":
+            if answer_[0].strip() == "related":
+                label = 1
+            if answer_[0].strip() == "unrelated":
+                label = 0
+            if out_[0].strip() == "related":
+                pred = 1
+            elif out_[0].strip() == "unrelated":
+                pred = 0
+            else:
+                pred = 2
+                unknown += 1
+            if label == pred:
+                match +=1
+            if label != pred:
+                if pred !=2:
+                    unmatch +=1 
+                    
+    print('unknown:',unknown, '  match:',match,' unmatch:',unmatch) 
     accuracy = match / (match+unmatch+unknown)
     unknown_acc = unknown / (match+unmatch+unknown)
     mismatch_acc = unmatch / (match+unmatch+unknown)
@@ -374,7 +399,7 @@ if __name__ == "__main__":
                 # evalaute
                 if step_step % args.eval_step == 0:
                     if args.do_eval:
-                        # writer.add_scalar('training_loss',loss,step_step)
+                        writer.add_scalar('training_loss',loss,step_step)
                         evaluate_and_summary(
                             args,special_tokens_ids,tokenizer,model, dev_dataloader, writer, loss,step_step,device)
 
@@ -400,7 +425,7 @@ if __name__ == "__main__":
         tokenizer.save_pretrained(args.output_dir)
         tokenizer.save_vocabulary(args.output_dir)
         # Load a trained model and vocabulary that you have fine-tuned
-        model = OpenAIGPTLMHeadModel.from_pretrained(args.output_dir)
-        tokenizer = OpenAIGPTTokenizer.from_pretrained(args.output_dir)
+        #model = OpenAIGPTLMHeadModel.from_pretrained(args.output_dir)
+        #tokenizer = OpenAIGPTTokenizer.from_pretrained(args.output_dir)
         model.to(device)
         # Dump_json(args,special_tokens_ids,model, test_dataloader, writer, step_step)
